@@ -1,6 +1,8 @@
 import random
-import time 
+import time
+import math
 from collections import Counter
+from itertools import combinations
 
 
 #card constants
