@@ -29,7 +29,7 @@ class PokerBot:
         self.hole_cards = hole_cards
         self.community_cards = community_cards
 
-        def evaluate_hand(self, cards):
+    def evaluate_hand(self, cards):
         ranks = [card % 13 for card in cards]
         suits = [card // 13 for card in cards]
         cards_as_strings = [card_to_string(card) for card in cards]
@@ -115,31 +115,49 @@ class PokerBot:
     def estimate_win_probability(self, time_limit=10):
         start_time = time.time()
         wins = 0
+        known = set(self.hole_cards + self.community_cards)
+        full_deck = create_deck()
+        deck = [c for c in full_deck if c not in known]
+        hand_list = list(combinations(deck, 2))
+
+
+        stats = {hand: {'wins': 0, 'runs': 0} for hand in hand_list}
         total_runs = 0
+        # start simulation
+        while time.time() - start_time < time_limit:
+            total_runs += 1
+            # selection using UCB1
+            best_hand = None
+            best_score = float('-inf')
+            for hand, data in stats.items():
+                runs = data['runs']
+                if runs == 0:
+                    ucb = float('inf')
+                else:
+                    win_rate = data['wins'] / runs
+                    ucb = win_rate + 2.0 * math.sqrt(math.log(total_runs) / runs)
+                if ucb > best_score:
+                    best_score = ucb
+                    best_hand = hand
 
-        while True:
-            if time.time() - start_time >= time_limit:
-                break
-            deck = create_deck()
-            known_cards = self.hole_cards + self.community_cards
-            deck = [c for c  in deck if c not in known_cards]
-            opponent_hand = draw(deck, 2)
+
+            temp = [c for c in deck if c not in best_hand]
+            random.shuffle(temp)
+            opponent_hand = list(best_hand)
             remaining_board_cards = 5 - len(self.community_cards)
-            future_community = draw(deck, remaining_board_cards)
-
-            full_community = self.community_cards + future_community
+            future = draw(temp, remaining_board_cards)
+            full_community = self.community_cards + future
 
             bot_score = self.evaluate_hand(self.hole_cards + full_community)
             opponent_score = self.evaluate_hand(opponent_hand + full_community)
             if bot_score > opponent_score:
-                wins += 1
-            total_runs += 1
-            
+                stats[best_hand]['wins'] += 1
+            stats[best_hand]['runs'] += 1
+        wins = [data['wins'] / data['runs'] for data in stats.values() if data['runs'] >0] # mean of hand win rates
+        return sum(wins) / len(wins) if wins else 0
 
-
-
-        return wins / total_runs if total_runs > 0 else 0
     
+
     def make_decision(self):
         prob = self.estimate_win_probability()
         print(f"Estimated Win Probability: {prob:3f}")
