@@ -29,24 +29,88 @@ class PokerBot:
         self.hole_cards = hole_cards
         self.community_cards = community_cards
 
-    def evaluate_hand(self, cards):
+        def evaluate_hand(self, cards):
         ranks = [card % 13 for card in cards]
         suits = [card // 13 for card in cards]
+        cards_as_strings = [card_to_string(card) for card in cards]
 
-        #Set them to specific keys for counting occurrences
+        # Set them to specific keys for counting occurrences
         rank_counts = Counter(ranks)
         suit_counts = Counter(suits)
 
         flush_suit = None
         for suit, count in suit_counts.items():
-            if count >= 5:
+            if count >= 5:  # if there are 5 of one suit then there is a flush
                 flush_suit = suit
                 break
-        #ace = 12
-        unique_ranks = sorted(set(ranks)) #need to account for Ace in front
+        # ace = 12
+        unique_ranks = sorted(set(ranks))  # need to account for Ace in front
         if 12 in unique_ranks:
             unique_ranks = [0] + unique_ranks
-        return random.random()
+
+        # check straight "This hand contains five cards of sequential rank in at least two different suits"
+        straight = False
+        upper_card = None
+        for i in range(len(unique_ranks) - 4):
+            window = unique_ranks[i:i + 5]
+            if window[4] - window[0] == 4 and len(window) == 5:  #
+                straight = True
+                upper_card = window[4]
+                # print("there's a straight!")
+
+        # check for a straight flush "This hand contains five cards in sequence, all of same suit"
+        straight_flush = False
+        royal_flush = False
+        if flush_suit is not None:
+            cards = [card for card in cards if card // 13 == flush_suit]
+            flush_ranks = sorted(set([card % 13 for card in cards]))
+            for i in range(len(flush_ranks) - 4):
+                window = flush_ranks[i: i+5]
+                if window[4] - window[0] == 4 and len(window) == 5:
+                    if window == [8, 9, 10, 11,12]:
+                        royal_flush = True
+                        # print("there's a royal flush")
+                    else:
+                        straight_flush = True
+                        # print("there's a straight flush!")
+                    upper_card = window[4]
+                    break
+
+        if royal_flush: # royal flush
+            return (10, [upper_card])
+        elif straight_flush: # straight flush
+            return (9, [upper_card])
+        elif 4 in rank_counts.values(): # 4 of a kind
+            card = [r for r, c in rank_counts.items() if c == 4][0]
+            take = max(r for r in ranks if r != card) # grab other highest card
+            return (8, [card, take])
+        elif 3 in rank_counts.values() and 2 in rank_counts.values(): # full house
+            threeCard = [r for r, c in rank_counts.items() if c == 3][0]
+            twoCard = [r for r, c in rank_counts.items() if c == 2][0]
+            return (7, [threeCard, twoCard])
+        elif flush_suit: # regular flush
+            flush_cards = sorted([r for i, r in enumerate(ranks) if suits[i] == flush_suit], reverse=True)[:5]
+            return (6, flush_cards)
+        elif straight:  # regular straight
+            return (5, [upper_card])
+        elif 3 in rank_counts.values() and 2 not in rank_counts.values(): # 3 of a kind and 2 randoms
+            threeCard = [r for r, c in rank_counts.items() if c == 3][0]
+            firstCard = max(r for r in ranks if r != threeCard)
+            secondCard = max(r for r in ranks if r != threeCard and r != firstCard)
+            return (3, [threeCard, firstCard, secondCard])
+        elif list(rank_counts.values()).count(2) >= 2:  # two pairs
+            pairs = sorted([r for r, c in rank_counts.items() if c == 2], reverse=True)[:2]
+            other = max(r for r in ranks if r not in pairs)
+            return (2, pairs + [other])
+        elif 2 in rank_counts.values(): # one pair
+            pairCard = [r for r, c in rank_counts.items() if c == 2][0]
+            firstCard = max(r for r in ranks if r != pairCard)
+            secondCard = max(r for r in ranks if r != pairCard and r != firstCard)
+            thirdCard = max(r for r in ranks if r != pairCard and r != firstCard and r != secondCard)
+            return (1, [pairCard, firstCard, secondCard, thirdCard])
+        else:
+            top = sorted(ranks, reverse=True)[: 5]
+            return (0, top)
     
     def estimate_win_probability(self, time_limit=10):
         start_time = time.time()
