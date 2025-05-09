@@ -166,41 +166,38 @@ class PokerBot:
         return "Stay" if prob >= 0.5 else "FOLD"
     
 
+if __name__ == "__main__":
+    full_deck = create_deck()
+    bot_hand = draw(full_deck, 2)
+    community_cards = draw(full_deck, 3)
+    bot = PokerBot(bot_hand, community_cards)
 
+    print("Bot cards:", [card_to_string(c) for c in bot_hand])
+    print("Community cards:", [card_to_string(c) for c in community_cards])
 
-def test_evaluate_hand():
-    bot = PokerBot([], [])
+    decision = bot.make_decision()
+    print("Bot decision:", decision)
 
-    def make_card(rank, suit):
-        return SUITS.index(suit) * 13 + RANKS.index(rank)
+# def test_evaluate_hand():
+#     bot = PokerBot([], [])
 
-    # Test 1: Pair of Aces
-    hand1 = [make_card('A', 'S'), make_card('A', 'H'), make_card('5', 'C'),
-             make_card('8', 'D'), make_card('2', 'S'), make_card('9', 'H'), make_card('J', 'C')]
+#     def make_card(rank, suit):
+#         return SUITS.index(suit) * 13 + RANKS.index(rank)
+
+#     # Test 1: Pair of Aces
+#     hand1 = [make_card('A', 'S'), make_card('A', 'H'), make_card('5', 'C'),
+#              make_card('8', 'D'), make_card('2', 'S'), make_card('9', 'H'), make_card('J', 'C')]
     
-    # Test 2: Flush (all hearts)
-    hand2 = [make_card('2', 'H'), make_card('5', 'H'), make_card('9', 'H'),
-             make_card('J', 'H'), make_card('Q', 'H'), make_card('3', 'S'), make_card('K', 'D')]
+#     # Test 2: Flush (all hearts)
+#     hand2 = [make_card('2', 'H'), make_card('5', 'H'), make_card('9', 'H'),
+#              make_card('J', 'H'), make_card('Q', 'H'), make_card('3', 'S'), make_card('K', 'D')]
 
-    # Test 3: Straight (5-6-7-8-9)
-    hand3 = [make_card('5', 'S'), make_card('6', 'D'), make_card('7', 'C'),
-             make_card('8', 'H'), make_card('9', 'S'), make_card('J', 'D'), make_card('3', 'H')]
+#     # Test 3: Straight (5-6-7-8-9)
+#     hand3 = [make_card('5', 'S'), make_card('6', 'D'), make_card('7', 'C'),
+#              make_card('8', 'H'), make_card('9', 'S'), make_card('J', 'D'), make_card('3', 'H')]
 
-    # Run evaluate_hand (currently returns random, will improve later)
-    print("Pair of Aces hand score:", bot.evaluate_hand(hand1))
-    print("Flush hand score:", bot.evaluate_hand(hand2))
-    print("Straight hand score:", bot.evaluate_hand(hand3))
+#     # Run evaluate_hand (currently returns random, will improve later)
+#     print("Pair of Aces hand score:", bot.evaluate_hand(hand1))
+#     print("Flush hand score:", bot.evaluate_hand(hand2))
+#     print("Straight hand score:", bot.evaluate_hand(hand3))
 
-test_evaluate_hand()
-# if __name__ == "__main__":
-#     full_deck = create_deck()
-#     random.shuffle(full_deck)
-
-#     bot_hand = draw(full_deck, 2)
-#     community_cards = draw(full_deck, 3)  # Simulate the flop
-
-#     bot = PokerBot(bot_hand, community_cards)
-
-#     print("Bot hole cards:", [card_to_string(c) for c in bot_hand])
-#     print("Community cards:", [card_to_string(c) for c in community_cards])
-#     print("Decision:", bot.make_decision())
